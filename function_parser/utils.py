@@ -33,14 +33,39 @@ def remap_nwo(nwo: str) -> Tuple[str, str]:
     return (nwo, None)
 
 
-def get_sha(tmp_dir: tempfile.TemporaryDirectory, nwo: str):
-    os.chdir(os.path.join(tmp_dir.name, nwo))
+def get_sha(proj_dir: str):
+    curr_dir = os.getcwd()
+    os.chdir(proj_dir)
     # git rev-parse HEAD
     cmd = ['git', 'rev-parse', 'HEAD']
     sha = subprocess.check_output(cmd).strip().decode('utf-8')
-    os.chdir('/tmp')
+    os.chdir(curr_dir)
     return sha
 
+def get_nwo(proj_dir: str):
+    curr_dir = os.getcwd()
+    os.chdir(proj_dir)
+    # Run the git command
+    cmd = ['git', 'config', '--local', '--get', 'remote.origin.url']
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    os.chdir(curr_dir)
+
+    # Check for errors
+    if result.returncode != 0:
+        print(f'Error: {result.stderr}')
+        return None
+
+    # Extract the username and repo
+    url = result.stdout.strip()
+    match = re.search(':(.*)\.git', url)
+
+    # Check if match was found
+    if match is None:
+        print(f'Error: Unexpected URL format: {url}')
+        return None
+
+    # Return the matched group
+    return match.group(1)
 
 def download(nwo: str):
     os.environ['GIT_TERMINAL_PROMPT'] = '0'
@@ -52,7 +77,7 @@ def download(nwo: str):
 
 def walk(tmp_dir: tempfile.TemporaryDirectory, ext: str):
     results = []
-    for root, _, files in os.walk(tmp_dir.name):
+    for root, _, files in os.walk(tmp_dir):
         for f in files:
             if f.endswith('.' + ext):
                 results.append(os.path.join(root, f))

@@ -22,7 +22,7 @@ from tree_sitter import Language, Parser
 
 from function_parser.language_data import LANGUAGE_METADATA
 from function_parser.parsers.language_parser import LanguageParser, tokenize_docstring
-from function_parser.utils import download, get_sha, flatten, remap_nwo, walk
+from function_parser.utils import download, get_sha, flatten, remap_nwo, walk, get_nwo
 
 class DataProcessor:
 
@@ -32,15 +32,16 @@ class DataProcessor:
         self.language = language
         self.language_parser = language_parser
 
-    def process_dee(self, nwo, ext) -> List[Dict[str, Any]]:
+    def process_project(self, proj_dir: str, ext) -> List[Dict[str, Any]]:
         # Process dependees (libraries) to get function implementations
         indexes = []
+        nwo = get_nwo(proj_dir)
+
         _, nwo = remap_nwo(nwo)
-        if nwo is None:
+        if proj_dir is None:
             return indexes
 
-        tmp_dir = download(nwo)
-        files = walk(tmp_dir, ext)
+        files = walk(proj_dir, ext)
         # files = glob.iglob(tmp_dir.name + '/**/*.{}'.format(ext), recursive=True)
         sha = None
 
@@ -49,7 +50,30 @@ class DataProcessor:
             if definitions is None:
                 continue
             if sha is None:
-                sha = get_sha(tmp_dir, nwo)
+                sha = get_sha(proj_dir)
+
+            _, path, functions = definitions
+            indexes.extend((self.extract_function_data(func, nwo, path, sha) for func in functions if len(func['function_tokens']) > 1))
+        return indexes
+
+    def process_dee(self, nwo, ext) -> List[Dict[str, Any]]:
+        # Process dependees (libraries) to get function implementations
+        indexes = []
+        _, nwo = remap_nwo(nwo)
+        if nwo is None:
+            return indexes
+
+        tmp_dir = download(nwo)
+        files = walk(tmp_dir.name, ext)
+        # files = glob.iglob(tmp_dir.name + '/**/*.{}'.format(ext), recursive=True)
+        sha = None
+
+        for f in files:
+            definitions = self.get_function_definitions(f)
+            if definitions is None:
+                continue
+            if sha is None:
+                sha = get_sha(tmp_dir.name, nwo)
 
             nwo, path, functions = definitions
             indexes.extend((self.extract_function_data(func, nwo, path, sha) for func in functions if len(func['function_tokens']) > 1))
@@ -149,7 +173,7 @@ class DataProcessor:
             with open(filepath) as source_code:
                 blob = source_code.read()
             tree = DataProcessor.PARSER.parse(blob.encode())
-            return (nwo, path, self.language_parser.get_context(tree, blob), self.language_parser.get_calls(tree, blob))
+            return (nwo, filepath, self.language_parser.get_context(tree, blob), self.language_parser.get_calls(tree, blob))
         except (UnicodeDecodeError, FileNotFoundError, IsADirectoryError, ValueError, OSError):
             return None
 
