@@ -19,7 +19,7 @@ processor = DataProcessor(
 for i in tqdm(range(1,51)):
     dependee = f"project{i}"
     print(dependee)
-    definitions = processor.process_dee(dependee, ext=LANGUAGE_METADATA[language]["ext"])
+    definitions = processor.process_project(dependee, ext=LANGUAGE_METADATA[language]["ext"])
     df = pd.DataFrame(definitions)
     df.to_parquet(f"df_project{i}.parquet")
 print("Done!")
