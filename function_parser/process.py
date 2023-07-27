@@ -158,6 +158,8 @@ class DataProcessor:
             'docstring': function['docstring'].strip(),
             'docstring_summary': function['docstring_summary'].strip(),
             'docstring_tokens': tokenize_docstring(function['docstring_summary']),
+            'func_begin': function['start_point'][0] + 1,
+            'func_end': function['end_point'][0] + 1,
             'function': function['function'].strip(),
             'function_tokens': function['function_tokens'],
             'url': 'https://github.com/{}/blob/{}/{}#L{}-L{}'.format(nwo, sha, path, function['start_point'][0] + 1,
