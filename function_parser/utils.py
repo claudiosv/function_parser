@@ -57,15 +57,22 @@ def get_nwo(proj_dir: str):
 
     # Extract the username and repo
     url = result.stdout.strip()
-    match = re.search(':(.*)\.git', url)
 
-    # Check if match was found
-    if match is None:
-        print(f'Error: Unexpected URL format: {url}')
-        return None
+    # Check if URL is in SSH format
+    ssh_match = re.search('git@github\.com:(.*)\.git', url)
 
-    # Return the matched group
-    return match.group(1)
+    # If URL is in SSH format, return the matched group
+    if ssh_match is not None:
+        return ssh_match.group(1)
+
+    # If URL is in HTTPS format, return the matched group
+    https_match = re.search('https://github\.com/(.*)\.git', url)
+    if https_match is not None:
+        return https_match.group(1)
+
+    # If no match was found, print an error and return None
+    print(f'Error: Unexpected URL format: {url}')
+    return None
 
 def download(nwo: str):
     os.environ['GIT_TERMINAL_PROMPT'] = '0'
