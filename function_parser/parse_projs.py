@@ -25,6 +25,8 @@ if __name__ == "__main__":
         dependee = (
             Path(os.environ["DYPYBENCH_PROJECTS_ROOT"]) / f"project{i}"
         ).resolve()
+        if not dependee.exists():
+            continue
         print(dependee)
         definitions = processor.process_project(
             str(dependee), ext=LANGUAGE_METADATA[language]["ext"]
