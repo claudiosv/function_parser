@@ -25,6 +25,8 @@ def traverse(node, results: List) -> None:
         results.append(node)
 
 def nodes_are_equal(n1, n2):
+    if n1 is None or n2 is None:
+        return False
     return n1.type == n2.type and n1.start_point == n2.start_point and n1.end_point == n2.end_point
 
 def previous_sibling(tree, node):

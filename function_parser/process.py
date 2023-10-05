@@ -52,7 +52,8 @@ class DataProcessor:
             if sha is None:
                 sha = get_sha(proj_dir)
 
-            _, path, functions = definitions
+            _, _, functions = definitions
+            path = f[len(proj_dir)+1:]
             indexes.extend((self.extract_function_data(func, nwo, path, sha) for func in functions if len(func['function_tokens']) > 1))
         return indexes
 
